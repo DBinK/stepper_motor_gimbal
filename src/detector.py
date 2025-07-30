@@ -10,21 +10,24 @@ logger.remove()
 logger.add(sys.stderr, level="INFO")  
 
 
-class Detector:
+class QuadDetector:
     """
     四边形检测类
     """
-    def __init__(self, max_perimeter=99999, min_perimeter=1):
+    def __init__(self, max_perimeter=99999, min_perimeter=1, min_angle=30):
         """
         @param img: 图像来源
-        @param max_perimeter: 允许的最大周长 单位: px
-        @param min_perimeter: 允许的最小周长 单位: px
+        @param max_perimeter: 允许的最大周长
+        @param min_perimeter: 允许的最小周长
+        @param scale: 缩放比例
+        @param min_angle: 允许的最小角度
+        @param line_seg_num: 分段数量
         """
         self.img = None
 
         self.max_perimeter = max_perimeter
         self.min_perimeter = min_perimeter
-        
+        self.min_angle     = min_angle
 
     def preprocess_image(self, img: np.ndarray):
 
@@ -43,65 +46,63 @@ class Detector:
         # blur = cv2.convertScaleAbs(blur, alpha=1, beta=-120)
         
         # 二值化
-        _, threshold = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        # _, blur = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         # _, threshold = cv2.threshold(blur, 157, 255, cv2.THRESH_BINARY) # 二值化
 
-        # edges = cv2.Canny(blur, 50, 200)  # 边缘检测
+        edges = cv2.Canny(blur, 50, 200)
 
-        cv2.imshow("threshold", threshold)
-
-        return threshold
+        return edges
 
 
-    def find_max_quad_vertices(self, img):
+    def find_max_quad_vertices(self, pre_img):
         """
         在预处理后的图像中寻找具有最大周长的四边形，并返回顶点坐标
         """
-        contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)   # 查找轮廓
+        contours, _ = cv2.findContours(pre_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  # 查找轮廓
+
+        logger.debug(f'contours cnt: {len(contours)}')
+
+        max_perimeter_now = 0
+        vertices = None
+
+        # 遍历轮廓列表
+        for cnt in contours:
+            # 将当前轮廓近似为四边形
+            approx = cv2.approxPolyDP(cnt, 0.09 * cv2.arcLength(cnt, True), True)
+
+            # 确保转换后的形状为四边形
+            if len(approx) == 4:
+                # 计算四边形周长
+                perimeter = cv2.arcLength(approx, True)
+                perimeter_allowed = (perimeter <= self.max_perimeter) and (perimeter >= self.min_perimeter)
+                # cv2.drawContours(img, [approx], 0, (255, 0, 0), 2)
+
+                if perimeter_allowed and perimeter > max_perimeter_now:
+                    # 计算四边形角度
+                    cosines = []
+                    for i in range(4):
+                        p0 = approx[i][0]
+                        p1 = approx[(i + 1) % 4][0]
+                        p2 = approx[(i + 2) % 4][0]
+                        v1 = p0 - p1
+                        v2 = p2 - p1
+                        cosine_angle = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+                        angle = np.arccos(cosine_angle) * 180 / np.pi
+                        cosines.append(angle)
+                        
+                    # 若当前轮廓周长在允许范围内、大于当前最大周长且角度大于 min_angle
+                    if all(angle >= self.min_angle for angle in cosines):
+                        logger.info(f"perimeter: {perimeter}")
+                        max_perimeter_now = perimeter
+                        vertices = approx.reshape(4, 2)
+                    else:
+                        vertices = None
+
+        if vertices is not None:
+            logger.info(f"Found vertices: {vertices.tolist()}")
+        
+        return vertices
     
-        if contours:  # 找到最大的轮廓
-            largest_contour = max(contours, key=cv2.contourArea)
-
-            perimeter = cv2.arcLength(largest_contour, True)
-            if perimeter < img.shape[0]/6 * 4:   # 轮廓太小，可能是噪声，忽略
-                return []
-            
-            # 对轮廓进行多边形逼近
-            epsilon = 0.1 * cv2.arcLength(largest_contour, True)
-            approx = cv2.approxPolyDP(largest_contour, epsilon, True)
-            
-            if len(approx) == 4:  # 确保是四边形
-                # 获取四个角点的坐标
-                corners = [(int(point[0][0]), int(point[0][1])) for point in approx]
-                corners = self.sort_corners(corners)
-
-                logger.info("棋盘角点:", corners)
-
-                return corners
-            
-            else:
-                # print("没有找到合适的轮廓")
-                return []
-        else:
-            # print("没有找到合适的轮廓")
-            return []
-        
-
-    def sort_corners(self, corners):
-        """ 根据角度对四个角点进行排序，确保顺序为左上角、右上角、右下角、左下角。  """
-        
-        center_x = sum(x for x, y in corners) / 4  # 计算质心
-        center_y = sum(y for x, y in corners) / 4
-
-        def angle_from_center(point):  # 计算每个角点相对于质心的角度
-            return np.arctan2(point[1] - center_y, point[0] - center_x)
-        
-        corners = sorted(corners, key=angle_from_center)  # 根据角度对角点进行排序
-
-        corners = [corners[0], corners[1], corners[2], corners[3]]  # 重新排列顺序为左上角、右上角、右下角、左下角
-        
-        return corners
-
 
     def calculate_intersection(self, vertices):
         """
@@ -109,6 +110,7 @@ class Detector:
         @param vertices: 输入的顶点坐标
         @return: 返回交点坐标
         """
+
         x1, y1 = vertices[0]
         x2, y2 = vertices[2]
         x3, y3 = vertices[1]
@@ -137,27 +139,28 @@ class Detector:
             intersection_y = int(y1 + dy1 * t)
             self.intersection = [intersection_x, intersection_y]
 
-            logger.info(f"找到交点: {self.intersection}")
+            logger.info(f"Found intersection: {self.intersection}")
 
             return intersection_x, intersection_y
         else:
-            logger.info("找不到交点")
+            logger.info("No intersection found.")
             return []
-    
-
+        
     def detect(self,img):
         """
         @description: 检测函数入口
         """
+
         pre_img = self.preprocess_image(img.copy())
 
-        vertices = self.find_max_quad_vertices(pre_img)
+        vertices       = self.find_max_quad_vertices(pre_img)
+        if vertices is None:
+            raise ValueError("No quadrilateral found.")
+        intersection   = self.calculate_intersection(vertices)
 
-        center = self.calculate_intersection(vertices)
-
-        return vertices, center
+        return vertices, intersection
     
-    def draw(self, img, vertices, center):
+    def draw(self, img,vertices, intersection):
         """
         @description: 绘制检测结果
         """
@@ -192,11 +195,10 @@ class Detector:
                 (0, 255, 0), 1,
             )
             return img
-        
-        img_drawed = img.copy()
-        img_drawed = draw_lines_points(img_drawed, vertices)          # 绘制最大四边形
-        
-        img_drawed = draw_point_text(img_drawed, center[0], center[1]) # 绘制交点
+    
+
+        img_drawed = draw_lines_points(img, vertices)          # 绘制最大四边形
+        img_drawed = draw_point_text(img_drawed, intersection[0], intersection[1]) # 绘制交点
 
         return img_drawed
 
@@ -205,18 +207,21 @@ if __name__ == '__main__':
 
     print("开始测试")
     
-    img = cv2.imread("img/1.jpg")    
-    
-    # 检查图像是否成功加载
+    img = cv2.imread("img/1.jpg")
     if img is None:
         logger.error("图像加载失败，请检查路径是否正确或图像格式是否支持。")
         exit(-1)
     
     # 初始化四边形检测器
-    detector = Detector()
-    vertices, center = detector.detect(img)
-    img_detected = detector.draw(img, vertices, center)
-    
+    quad_detector = QuadDetector()
+
+    quad_detector.max_perimeter = 99999
+    quad_detector.min_perimeter = 1
+    quad_detector.min_angle     = 30
+
+    # 四边形检测结果
+    vertices, intersection = quad_detector.detect(img)
+    img_detected = quad_detector.draw(img, vertices, intersection)  # 绘制检测结果
 
     # 显示结果
     cv2.imshow("img_src", img)
