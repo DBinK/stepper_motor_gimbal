@@ -21,7 +21,11 @@ if __name__ == "__main__":
         vertices, intersection = detector.detect(img)
         if vertices is not None:
             img = detector.draw(img, vertices, intersection)
+
+
+        
         cv2.imshow("img", img)
+        
         if cv2.waitKey(1) == ord("q"):
             break
     pass

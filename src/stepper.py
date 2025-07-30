@@ -88,7 +88,7 @@ class EmmMotor:
         self._send(cmd)
 
     def position_control(self, direction: int, velocity: int, acceleration: int,
-                         pulses: int, raF: bool, snF: bool):
+                         pulses: int, raF: bool = False, snF: bool = False):
         """位置控制：pulses为脉冲数（圈数×1000）"""
         cmd = self._build_cmd(
             0xFD,
