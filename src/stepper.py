@@ -234,7 +234,18 @@ if __name__ == "__main__":
         # 发送位置控制指令（电机2：正转，4000RPM，100脉冲）
         motor2.position_control(
             direction=0,
-            velocity=4000,
+            velocity=100,
+            acceleration=0,
+            pulses=1000,
+            raF=False,
+            snF=False
+        )
+        time.sleep(0.1)
+        
+        # 发送位置控制指令（电机2：正转，4000RPM，100脉冲）
+        motor1.position_control(
+            direction=0,
+            velocity=100,
             acceleration=0,
             pulses=1000,
             raF=False,
@@ -245,15 +256,15 @@ if __name__ == "__main__":
         # 持续读取两个电机的位置
         print("实时位置监控 (Ctrl+C 退出):")
         while True:
-            # pos1 = motor1.get_real_position()
+            pos1 = motor1.get_real_position()
             pos2 = motor2.get_real_position()
-            # print(f"Motor1: {pos1:6.1f}°, Motor2: {pos2:6.1f}°")
-            print(f" Motor2: {pos2:6.1f}°")
+            print(f"Motor1: {pos1:6.1f}°, Motor2: {pos2:6.1f}°")
+            # print(f" Motor2: {pos2:6.1f}°")
             time.sleep(0.1)
 
     except KeyboardInterrupt:
         print("\n用户中断，停止电机...")
-        # motor1.stop_now(snF=False)
+        motor1.stop_now(snF=False)
         motor2.stop_now(snF=False)
     except Exception as e:
         print(f"运行出错: {e}")
