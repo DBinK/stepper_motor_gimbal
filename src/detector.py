@@ -10,7 +10,7 @@ logger.remove()
 logger.add(sys.stderr, level="INFO")  
 
 
-class QuadDetector:
+class Detector:
     """
     四边形检测类
     """
@@ -19,9 +19,7 @@ class QuadDetector:
         @param img: 图像来源
         @param max_perimeter: 允许的最大周长
         @param min_perimeter: 允许的最小周长
-        @param scale: 缩放比例
         @param min_angle: 允许的最小角度
-        @param line_seg_num: 分段数量
         """
         self.img = None
 
