@@ -142,7 +142,7 @@ class Detector:
             return intersection_x, intersection_y
         else:
             logger.info("No intersection found.")
-            return []
+            return None
         
     def detect(self,img):
         """
@@ -151,10 +151,16 @@ class Detector:
 
         pre_img = self.preprocess_image(img.copy())
 
-        vertices       = self.find_max_quad_vertices(pre_img)
+        vertices = self.find_max_quad_vertices(pre_img)
+
         if vertices is None:
-            raise ValueError("No quadrilateral found.")
+            logger.warning("No quadrilateral found.")
+            return None, None  # 返回None而不是抛出异常
+        
         intersection   = self.calculate_intersection(vertices)
+        if intersection is None:
+            logger.warning("No intersection found.")
+            return None, None
 
         return vertices, intersection
     
@@ -211,7 +217,7 @@ if __name__ == '__main__':
         exit(-1)
     
     # 初始化四边形检测器
-    quad_detector = QuadDetector()
+    quad_detector = Detector()
 
     quad_detector.max_perimeter = 99999
     quad_detector.min_perimeter = 1
