@@ -11,10 +11,9 @@ detector = Detector(
 
 cam = USBCamera()
 
-cam.start()
 
 if __name__ == "__main__":
-    
+
     while True:
         img = cam.read_color_img() 
         if img is None:
