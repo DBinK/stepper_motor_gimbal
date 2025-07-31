@@ -8,8 +8,14 @@ class Gimbal:
     云台控制类，使用两个EmmMotor电机分别控制水平和垂直方向的转动
     """
 
-    def __init__(self, horizontal_port: str, vertical_port: str, horizontal_addr: int = 1, vertical_addr: int = 2,
-                 baud_rate: int = 115200):
+    def __init__(
+        self,
+        horizontal_port: str,
+        vertical_port: str,
+        horizontal_addr: int = 1,
+        vertical_addr: int = 2,
+        baud_rate: int = 115200,
+    ):
         """
         初始化云台对象
         :param horizontal_port: 水平电机串口端口
@@ -26,9 +32,12 @@ class Gimbal:
         else:
             # 如果使用不同的串口
             self.shared_serial = None
-            self.horizontal_motor = EmmMotor(horizontal_addr,
-                                             serial.Serial(horizontal_port, baud_rate, timeout=0.1))
-            self.vertical_motor = EmmMotor(vertical_addr, serial.Serial(vertical_port, baud_rate, timeout=0.1))
+            self.horizontal_motor = EmmMotor(
+                horizontal_addr, serial.Serial(horizontal_port, baud_rate, timeout=0.1)
+            )
+            self.vertical_motor = EmmMotor(
+                vertical_addr, serial.Serial(vertical_port, baud_rate, timeout=0.1)
+            )
 
         # 云台状态
         self.horizontal_angle = 0.0
@@ -38,7 +47,7 @@ class Gimbal:
 
         # 云台参数配置
         self.horiz_move_factor = 0.5  # 水平移动因子
-        self.vert_move_factor = 0.5   # 垂直移动因子
+        self.vert_move_factor = 0.5  # 垂直移动因子
 
         # 初始化电机
         self._init_motors()
@@ -69,10 +78,10 @@ class Gimbal:
         """
         # 计算需要移动的角度差
         current_horizontal, current_vertical = self.get_current_angles()
-        
+
         horizontal_diff = horizontal_angle - current_horizontal
         vertical_diff = vertical_angle - current_vertical
-        
+
         # 转换为脉冲数并控制电机
         self._move_motors_by_angle(horizontal_diff, vertical_diff)
 
@@ -84,7 +93,9 @@ class Gimbal:
         """
         self._move_motors_by_angle(horizontal_diff, vertical_diff)
 
-    def _move_motors_by_angle(self, horizontal_angle_diff: float, vertical_angle_diff: float):
+    def _move_motors_by_angle(
+        self, horizontal_angle_diff: float, vertical_angle_diff: float
+    ):
         """
         根据角度差移动电机
         :param horizontal_angle_diff: 水平角度差
@@ -93,11 +104,11 @@ class Gimbal:
         # 将角度转换为脉冲数 (这里假设3200脉冲=360度，需要根据实际电机参数调整)
         horizontal_pulses = int(abs(horizontal_angle_diff) * 3200 / 360)
         vertical_pulses = int(abs(vertical_angle_diff) * 3200 / 360)
-        
+
         # 确定方向 (0: 正转, 1: 反转)
         horizontal_direction = 0 if horizontal_angle_diff >= 0 else 1
         vertical_direction = 0 if vertical_angle_diff >= 0 else 1
-        
+
         # 控制水平电机
         if horizontal_pulses > 0:
             self.horizontal_motor.position_control(
@@ -106,9 +117,9 @@ class Gimbal:
                 acceleration=100,
                 pulses=horizontal_pulses,
                 raF=False,
-                snF=False
+                snF=False,
             )
-        
+
         # 控制垂直电机
         if vertical_pulses > 0:
             self.vertical_motor.position_control(
@@ -117,14 +128,16 @@ class Gimbal:
                 acceleration=100,
                 pulses=vertical_pulses,
                 raF=False,
-                snF=False
+                snF=False,
             )
-        
+
         # 更新角度状态
         self.horizontal_angle += horizontal_angle_diff
         self.vertical_angle += vertical_angle_diff
 
-    def auto_track_target(self, target_x: int, target_y: int, frame_width: int, frame_height: int):
+    def auto_track_target(
+        self, target_x: int, target_y: int, frame_width: int, frame_height: int
+    ):
         """
         自动跟踪目标
         :param target_x: 目标x坐标
@@ -135,15 +148,15 @@ class Gimbal:
         # 计算图像中心点
         center_x = frame_width // 2
         center_y = frame_height // 2
-        
+
         # 计算偏差
         delta_x = target_x - center_x
         delta_y = target_y - center_y
-        
+
         # 转换为角度调整量
         horizontal_adjust = delta_x * self.horiz_move_factor / center_x
         vertical_adjust = -delta_y * self.vert_move_factor / center_y  # y轴方向相反
-        
+
         # 移动云台
         self.move_by_angle(horizontal_adjust, vertical_adjust)
 
@@ -186,24 +199,24 @@ class Gimbal:
 # 使用示例
 if __name__ == "__main__":
     # 创建云台对象 (根据实际串口配置修改)
-    gimbal = Gimbal(horizontal_port='COM13', vertical_port='COM28')
-    
+    gimbal = Gimbal(horizontal_port="COM13", vertical_port="COM28")
+
     try:
         # 获取当前位置
         h_angle, v_angle = gimbal.get_current_angles()
         print(f"当前角度 - 水平: {h_angle:.1f}°, 垂直: {v_angle:.1f}°")
-        
+
         # 相对移动
         gimbal.move_by_angle(30, 15)  # 水平右转30度，垂直上转15度
         time.sleep(2)
-        
+
         # 绝对移动到指定角度
         gimbal.move_to_absolute_angle(45, 30)  # 移动到水平45度，垂直30度
         time.sleep(2)
-        
+
         # 重置位置
         gimbal.reset_position()
-        
+
     except Exception as e:
         print(f"运行出错: {e}")
     finally:

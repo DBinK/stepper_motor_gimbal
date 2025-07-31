@@ -12,20 +12,20 @@ class EmmMotor:
 
     # 功能码映射表
     FUNC_CODES = {
-        'S_VER': 0x1F,
-        'S_RL': 0x20,
-        'S_PID': 0x21,
-        'S_VBUS': 0x24,
-        'S_CPHA': 0x27,
-        'S_ENCL': 0x31,
-        'S_TPOS': 0x33,
-        'S_VEL': 0x35,
-        'S_CPOS': 0x36,   # 当前位置
-        'S_PERR': 0x37,
-        'S_FLAG': 0x3A,
-        'S_ORG': 0x3B,
-        'S_Conf': 0x42,
-        'S_State': 0x43
+        "S_VER": 0x1F,
+        "S_RL": 0x20,
+        "S_PID": 0x21,
+        "S_VBUS": 0x24,
+        "S_CPHA": 0x27,
+        "S_ENCL": 0x31,
+        "S_TPOS": 0x33,
+        "S_VEL": 0x35,
+        "S_CPOS": 0x36,  # 当前位置
+        "S_PERR": 0x37,
+        "S_FLAG": 0x3A,
+        "S_ORG": 0x3B,
+        "S_Conf": 0x42,
+        "S_State": 0x43,
     }
 
     def __init__(self, addr: int, serial_port: serial.Serial):
@@ -72,10 +72,14 @@ class EmmMotor:
 
     def enable_control(self, state: bool, snF: bool):
         """使能电机控制"""
-        cmd = self._build_cmd(0xF3, 0xAB, 0x01 if state else 0x00, 0x01 if snF else 0x00)
+        cmd = self._build_cmd(
+            0xF3, 0xAB, 0x01 if state else 0x00, 0x01 if snF else 0x00
+        )
         self._send(cmd)
 
-    def velocity_control(self, direction: int, velocity: int, acceleration: int, snF: bool):
+    def velocity_control(
+        self, direction: int, velocity: int, acceleration: int, snF: bool
+    ):
         """速度控制：direction=0正转, 1反转；velocity单位RPM；acceleration"""
         cmd = self._build_cmd(
             0xF6,
@@ -83,12 +87,19 @@ class EmmMotor:
             (velocity >> 8) & 0xFF,
             velocity & 0xFF,
             acceleration & 0xFF,
-            0x01 if snF else 0x00
+            0x01 if snF else 0x00,
         )
         self._send(cmd)
 
-    def position_control(self, direction: int, velocity: int, acceleration: int,
-                         pulses: int, raF: bool = False, snF: bool = False):
+    def position_control(
+        self,
+        direction: int,
+        velocity: int,
+        acceleration: int,
+        pulses: int,
+        raF: bool = False,
+        snF: bool = False,
+    ):
         """位置控制：pulses为脉冲数（圈数×1000）"""
         cmd = self._build_cmd(
             0xFD,
@@ -101,7 +112,7 @@ class EmmMotor:
             (pulses >> 8) & 0xFF,
             pulses & 0xFF,
             0x01 if raF else 0x00,
-            0x01 if snF else 0x00
+            0x01 if snF else 0x00,
         )
         self._send(cmd)
 
@@ -120,20 +131,38 @@ class EmmMotor:
         cmd = self._build_cmd(0x93, 0x88, 0x01 if svF else 0x00)
         self._send(cmd)
 
-    def origin_modify_params(self, svF: bool, o_mode: int, o_dir: int, o_vel: int,
-                             o_tm: int, sl_vel: int, sl_ma: int, sl_ms: int, potF: bool):
+    def origin_modify_params(
+        self,
+        svF: bool,
+        o_mode: int,
+        o_dir: int,
+        o_vel: int,
+        o_tm: int,
+        sl_vel: int,
+        sl_ma: int,
+        sl_ms: int,
+        potF: bool,
+    ):
         """修改回零参数"""
         cmd = self._build_cmd(
-            0x4C, 0xAE,
+            0x4C,
+            0xAE,
             0x01 if svF else 0x00,
             o_mode & 0xFF,
             o_dir & 0xFF,
-            (o_vel >> 8) & 0xFF, o_vel & 0xFF,
-            (o_tm >> 24) & 0xFF, (o_tm >> 16) & 0xFF, (o_tm >> 8) & 0xFF, o_tm & 0xFF,
-            (sl_vel >> 8) & 0xFF, sl_vel & 0xFF,
-            (sl_ma >> 8) & 0xFF, sl_ma & 0xFF,
-            (sl_ms >> 8) & 0xFF, sl_ms & 0xFF,
-            0x01 if potF else 0x00
+            (o_vel >> 8) & 0xFF,
+            o_vel & 0xFF,
+            (o_tm >> 24) & 0xFF,
+            (o_tm >> 16) & 0xFF,
+            (o_tm >> 8) & 0xFF,
+            o_tm & 0xFF,
+            (sl_vel >> 8) & 0xFF,
+            sl_vel & 0xFF,
+            (sl_ma >> 8) & 0xFF,
+            sl_ma & 0xFF,
+            (sl_ms >> 8) & 0xFF,
+            sl_ms & 0xFF,
+            0x01 if potF else 0x00,
         )
         self._send(cmd)
 
@@ -159,7 +188,7 @@ class EmmMotor:
                 start_time = time.time()  # 重置超时计时器
             time.sleep(0.001)
 
-        hex_data = ' '.join(f'{b:02x}' for b in buffer)
+        hex_data = " ".join(f"{b:02x}" for b in buffer)
         return hex_data, len(buffer)
 
     def get_real_position(self) -> float:
@@ -167,7 +196,7 @@ class EmmMotor:
         获取当前电机位置角度（°）
         返回值：角度（浮点数），失败时返回 0.0
         """
-        self.read_sys_param('S_CPOS')
+        self.read_sys_param("S_CPOS")
         time.sleep(0.001)
         hex_data, _ = self.receive_data(timeout=0.1)
         return self._parse_position(hex_data)
@@ -187,13 +216,15 @@ class EmmMotor:
                 return 0.0
 
             # 提取4字节位置（大端序）
-            pos_bytes = bytes([
-                int(parts[3], 16),
-                int(parts[4], 16),
-                int(parts[5], 16),
-                int(parts[6], 16)
-            ])
-            pos_value = struct.unpack('>I', pos_bytes)[0]
+            pos_bytes = bytes(
+                [
+                    int(parts[3], 16),
+                    int(parts[4], 16),
+                    int(parts[5], 16),
+                    int(parts[6], 16),
+                ]
+            )
+            pos_value = struct.unpack(">I", pos_bytes)[0]
 
             # 转换为角度：360° / 65536 单位
             angle = (pos_value * 360.0) / 65536.0
@@ -214,8 +245,8 @@ class EmmMotor:
 if __name__ == "__main__":
     # 配置串口
     BAUD_RATE = 115200
-    SERIAL_PORT1 = 'COM13'
-    SERIAL_PORT2 = 'COM28'
+    SERIAL_PORT1 = "COM13"
+    SERIAL_PORT2 = "COM28"
 
     try:
         # 打开串口
@@ -233,23 +264,13 @@ if __name__ == "__main__":
 
         # 发送位置控制指令（电机2：正转，4000RPM，100脉冲）
         motor2.position_control(
-            direction=0,
-            velocity=100,
-            acceleration=0,
-            pulses=1000,
-            raF=False,
-            snF=False
+            direction=0, velocity=100, acceleration=0, pulses=1000, raF=False, snF=False
         )
         time.sleep(0.1)
-        
+
         # 发送位置控制指令（电机2：正转，4000RPM，100脉冲）
         motor1.position_control(
-            direction=0,
-            velocity=100,
-            acceleration=0,
-            pulses=1000,
-            raF=False,
-            snF=False
+            direction=0, velocity=100, acceleration=0, pulses=1000, raF=False, snF=False
         )
         time.sleep(0.1)
 
