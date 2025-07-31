@@ -30,7 +30,7 @@ class USBCamera():
     def init_video_stream(self, cap_id=None):
         '''初始化视频流'''
         if cap_id is None:
-            cap_id = int(self.config.get("camera_id", 0))
+            cap_id = self.config.get("camera_id", 0)
             
         capture = cv2.VideoCapture(cap_id)
         # 设置编码方式	

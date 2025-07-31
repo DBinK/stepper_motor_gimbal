@@ -90,15 +90,16 @@ class Detector:
                         
                     # 若当前轮廓周长在允许范围内、大于当前最大周长且角度大于 min_angle
                     if all(angle >= self.min_angle for angle in cosines):
-                        logger.info(f"perimeter: {perimeter}")
+                        # logger.info(f"perimeter: {perimeter}")
                         max_perimeter_now = perimeter
                         vertices = approx.reshape(4, 2)
                     else:
                         vertices = None
 
         if vertices is not None:
-            logger.info(f"Found vertices: {vertices.tolist()}")
-        
+            # logger.info(f"Found vertices: {vertices.tolist()}")       
+            pass 
+
         return vertices
     
 
@@ -158,13 +159,14 @@ class Detector:
             return None, None  # 返回None而不是抛出异常
         
         intersection   = self.calculate_intersection(vertices)
+        
         if intersection is None:
             logger.warning("No intersection found.")
             return None, None
 
         return vertices, intersection
     
-    def draw(self, img,vertices, intersection):
+    def draw(self, img, vertices, intersection, color=(0, 0, 255)):
         """
         @description: 绘制检测结果
         """
@@ -199,10 +201,14 @@ class Detector:
                 (0, 255, 0), 1,
             )
             return img
-    
 
-        img_drawed = draw_lines_points(img, vertices)          # 绘制最大四边形
-        img_drawed = draw_point_text(img_drawed, intersection[0], intersection[1]) # 绘制交点
+        if vertices is None:
+            return img  # 如果没有检测到四边形，直接返回原图
+        else:
+            img_drawed = draw_lines_points(img, vertices)  # 绘制最大四边形
+
+        if intersection is not None: 
+            img_drawed = draw_point_text(img_drawed, intersection[0], intersection[1], color)  # 绘制中点
 
         return img_drawed
 
