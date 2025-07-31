@@ -17,13 +17,18 @@ detector = Detector(
 
 # 初始化相机
 # cam = USBCamera({'camera_id': 1,})
-cam = USBCamera({'camera_id': "http://192.168.0.67:4747/video",})
+cam = USBCamera({'camera_id': "http://192.168.0.110:4747/video",})
 
 # 初始化云台
 # gim = Gimbal(horizontal_port='COM28', vertical_port='COM28')
 
 # 初始化坐标滤波器
-coord_filter = CoordinateKalmanFilter(fps=30, initial_samples_needed=None, reset_timeout=1.0)
+coord_filter = CoordinateKalmanFilter(
+    fps=30, 
+    initial_samples_needed=None, 
+    reset_timeout=1.0,
+    jump_threshold=500,  # 设置跳变阈值
+)
 
 if __name__ == "__main__":
     while True:
@@ -71,7 +76,7 @@ if __name__ == "__main__":
         
         # 显示图像
         cv2.namedWindow("Kalman Filtered Tracking", cv2.WINDOW_NORMAL)
-        cv2.resizeWindow("Kalman Filtered Tracking", 800, 600)
+        # cv2.resizeWindow("Kalman Filtered Tracking", 800, 600)
         cv2.imshow("Kalman Filtered Tracking", img)
 
         if cv2.waitKey(1) == ord("q"):

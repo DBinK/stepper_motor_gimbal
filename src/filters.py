@@ -7,7 +7,15 @@ import time
 class CoordinateKalmanFilter:
     """用于实时坐标滤波的Kalman滤波器封装类"""
     
-    def __init__(self, fps=30, initial_samples_needed=20, reset_timeout=1.0):
+
+    def __init__(self, 
+                 fps=30, 
+                 initial_samples_needed=20, 
+                 reset_timeout=1.0, 
+                 jump_threshold=None,
+                 r_cov=100.0,  # 观测噪声协方差
+                 q_cov=10.0     # 过程噪声协方差
+        ):
         """
         初始化Kalman滤波器
         
@@ -15,13 +23,17 @@ class CoordinateKalmanFilter:
             fps: 视频帧率，用于计算时间步长
             initial_samples_needed: 需要的初始样本数量，如果为None则跳过EM训练
             reset_timeout: 无检测时重置滤波器的超时时间(秒)
+            jump_threshold: 数据跳变阈值（像素），如果测量值与预测值差异超过此值则视为无效测量
         """
         self.fps = fps
         self.dt = 1.0 / fps
         self.initial_samples_needed = initial_samples_needed
         self.reset_timeout = reset_timeout
+        self.jump_threshold = jump_threshold
         
         # 初始化状态
+        self.r_cov = r_cov
+        self.q_cov = q_cov
         self.kalman_initialized = False
         self.initial_samples = []
         self.filtered_state_mean = None
@@ -51,13 +63,14 @@ class CoordinateKalmanFilter:
             observation_matrices=observation_matrix,
             initial_state_mean=[0, 0, 0, 0],
             initial_state_covariance=np.eye(4) * 1000,
-            observation_covariance=np.eye(2) * 5,
-            transition_covariance=np.eye(4) * 0.5,
+            observation_covariance=np.eye(2) * self.r_cov,   # 观测噪声, 减小这个值可以让滤波器更信任观测值，从而更快地跟随实际测量值 [1~200]
+            transition_covariance=np.eye(4) * self.q_cov,  # 状态噪声, 增加这个值可以让滤波器更快地响应变化，因为它认为模型不确定性更高 [1~10]
             em_vars=['transition_covariance', 'observation_covariance']
         )
         
         return kf
     
+
     def process(self, measurement):
         """
         处理新的测量值
@@ -98,6 +111,19 @@ class CoordinateKalmanFilter:
         
         # 滤波器已初始化，进行滤波或预测
         if measurement is not None:
+            # 检查是否有跳变阈值设置
+            if self.jump_threshold is not None and self.filtered_state_mean is not None:
+                # 计算预测位置与实际测量位置的距离
+                predicted_x, predicted_y = self.filtered_state_mean[0], self.filtered_state_mean[2]
+                measured_x, measured_y = measurement
+                distance = np.sqrt((predicted_x - measured_x)**2 + (predicted_y - measured_y)**2)
+                
+                # 如果距离超过阈值，将测量值视为None（进入预测模式）
+                if distance > self.jump_threshold:
+                    measurement = None
+        
+        # 滤波器已初始化，进行滤波或预测
+        if measurement is not None:
             # 更新Kalman滤波器
             self.filtered_state_mean, self.filtered_state_covariance = \
                 self.kf.filter_update(
@@ -115,8 +141,8 @@ class CoordinateKalmanFilter:
                     observation=None
                 )
             return (self.filtered_state_mean[0], self.filtered_state_mean[2]), 'predicting'
-# ... existing code ...
     
+
     def _train_kalman_filter(self):
         """使用收集的样本训练Kalman滤波器"""
         # 转换为numpy数组
