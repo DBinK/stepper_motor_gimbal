@@ -90,9 +90,9 @@ class Gimbal:
         :param horizontal_angle_diff: 水平角度差
         :param vertical_angle_diff: 垂直角度差
         """
-        # 将角度转换为脉冲数 (这里假设1000脉冲=360度，需要根据实际电机参数调整)
-        horizontal_pulses = int(abs(horizontal_angle_diff) * 1000 / 360)
-        vertical_pulses = int(abs(vertical_angle_diff) * 1000 / 360)
+        # 将角度转换为脉冲数 (这里假设3200脉冲=360度，需要根据实际电机参数调整)
+        horizontal_pulses = int(abs(horizontal_angle_diff) * 3200 / 360)
+        vertical_pulses = int(abs(vertical_angle_diff) * 3200 / 360)
         
         # 确定方向 (0: 正转, 1: 反转)
         horizontal_direction = 0 if horizontal_angle_diff >= 0 else 1
@@ -170,17 +170,17 @@ class Gimbal:
         if self.shared_serial:
             try:
                 self.shared_serial.close()
-            except:
-                pass
+            except Exception as e:
+                print(f"串口关闭出错: {e}")
         else:
             try:
                 self.horizontal_motor.ser.close()
-            except:
-                pass
+            except Exception as e:
+                print(f"串口关闭出错: {e}")
             try:
                 self.vertical_motor.ser.close()
-            except:
-                pass
+            except Exception as e:
+                print(f"串口关闭出错: {e}")
 
 
 # 使用示例
