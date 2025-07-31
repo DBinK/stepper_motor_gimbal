@@ -1,10 +1,11 @@
 import cv2
 import time
+from loguru import logger
 
 from detector import Detector
 from uvc import USBCamera
 from gimbal import Gimbal
-from filters import CoordinateKalmanFilter  # 导入新的滤波器类
+from filters import CoordinateKalmanFilter 
 
 from utils import time_diff
 
@@ -58,6 +59,7 @@ if __name__ == "__main__":
                 cv2.circle(img, (x, y), 5, (0, 255, 0), -1)  # 绿色: 滤波后
             elif status == "predicting":
                 cv2.circle(img, (x, y), 5, (255, 0, 0), -1)  # 蓝色: 预测
+                logger.info(f"predicting: ({x}, {y})")
 
             # 云台控制 (无云台时可注释后调试)
             # if status in ['initialized', 'predicting']:

@@ -158,7 +158,7 @@ class Detector:
         vertices = self.find_max_quad_vertices(pre_img)
 
         if vertices is None:
-            logger.warning("No quadrilateral found.")
+            # logger.warning("No quadrilateral found.")
             return None, None  # 返回None而不是抛出异常
 
         intersection = self.calculate_intersection(vertices)
