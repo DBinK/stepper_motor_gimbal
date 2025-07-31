@@ -34,7 +34,7 @@ class USBCamera():
             
         capture = cv2.VideoCapture(cap_id)
         # 设置编码方式	
-        capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+        capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')) # type: ignore
         # 设置图像高度
         capture.set(cv2.CAP_PROP_FRAME_HEIGHT, int(self.config.get('image_width', 1280)))
         # 设置图像宽度
