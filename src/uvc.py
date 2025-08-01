@@ -53,8 +53,6 @@ class USBCamera:
 
         self.cap = capture
 
-        self.cap = capture
-
         return capture
 
     def read_color_img(self):

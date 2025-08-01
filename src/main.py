@@ -20,8 +20,8 @@ detector = Detector(
 # cam = USBCamera({'camera_id': 1,})
 cam = USBCamera(
     {
-        # "camera_id": 1,
-        "camera_id": "http://192.168.1.207:4747/video",
+        "camera_id": 1,
+        # "camera_id": "http://192.168.1.207:4747/video",
     }
 )
 
@@ -49,16 +49,16 @@ if __name__ == "__main__":
         # 检测靶纸
         vertices, intersection = detector.detect(img)
 
-        # 处理坐标 - 核心变化在这里
-        measurement = intersection  # 可以是None
-        filtered_coords, status = coord_filter.process(measurement)
-
         # 绘制检测结果
         img = detector.draw(img, vertices, intersection)
         
         center_x = img.shape[1] // 2
         center_y = img.shape[0] // 2
-        cv2.circle(img, (center_x, center_y), 3, (255, 0, 255), -1)
+        cv2.circle(img, (center_x, center_y), 3, (255, 0, 255), -1)  # 绘制准星
+
+        # 处理坐标 - 核心变化在这里
+        measurement = intersection  # 可以是None
+        filtered_coords, status = coord_filter.process(measurement)
 
         # 绘制滤波后的点
         if filtered_coords is not None:
@@ -71,8 +71,8 @@ if __name__ == "__main__":
 
             # 云台控制 (无云台时可注释后调试)
             if status in ['initialized', 'predicting']:
-                gim.horiz_move_factor = 2
-                gim.vert_move_factor = 2
+                gim.horiz_move_factor = 10
+                gim.vert_move_factor = 10
                 # target_x = -target_x  # 反转方向q
                 gim.auto_track_target(target_x, target_y, img.shape[1], img.shape[0])
 
