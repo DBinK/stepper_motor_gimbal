@@ -1,5 +1,9 @@
 import time
+
+import loguru
 import serial
+from loguru import logger
+
 from stepper import EmmMotor
 
 
@@ -12,8 +16,8 @@ class Gimbal:
         self,
         horizontal_port: str,
         vertical_port: str,
-        horizontal_addr: int = 1,
-        vertical_addr: int = 2,
+        horizontal_addr: int = 2,
+        vertical_addr: int = 1,
         baud_rate: int = 115200,
     ):
         """
@@ -46,8 +50,8 @@ class Gimbal:
         self.target_y = None
 
         # 云台参数配置
-        self.horiz_move_factor = 0.5  # 水平移动因子
-        self.vert_move_factor = 0.5  # 垂直移动因子
+        self.horiz_move_factor = 100.5  # 水平移动因子
+        self.vert_move_factor = 100.5  # 垂直移动因子
 
         # 初始化电机
         self._init_motors()
@@ -113,19 +117,21 @@ class Gimbal:
         if horizontal_pulses > 0:
             self.horizontal_motor.position_control(
                 direction=horizontal_direction,
-                velocity=1000,
-                acceleration=100,
+                velocity=100,
+                acceleration=0,
                 pulses=horizontal_pulses,
                 raF=False,
                 snF=False,
             )
 
+        time.sleep(0.001)  # 延时1ms, 不然串口信号会乱
+
         # 控制垂直电机
         if vertical_pulses > 0:
             self.vertical_motor.position_control(
                 direction=vertical_direction,
-                velocity=1000,
-                acceleration=100,
+                velocity=100,
+                acceleration=0,
                 pulses=vertical_pulses,
                 raF=False,
                 snF=False,
@@ -156,6 +162,8 @@ class Gimbal:
         # 转换为角度调整量
         horizontal_adjust = delta_x * self.horiz_move_factor / center_x
         vertical_adjust = -delta_y * self.vert_move_factor / center_y  # y轴方向相反
+
+        logger.info(f"Horizontal adjust: {horizontal_adjust:.2f}, Vertical adjust: {vertical_adjust:.2f}")
 
         # 移动云台
         self.move_by_angle(horizontal_adjust, vertical_adjust)
@@ -199,7 +207,7 @@ class Gimbal:
 # 使用示例
 if __name__ == "__main__":
     # 创建云台对象 (根据实际串口配置修改)
-    gimbal = Gimbal(horizontal_port="COM13", vertical_port="COM28")
+    gimbal = Gimbal(horizontal_port="COM29", vertical_port="COM29")
 
     try:
         # 获取当前位置
@@ -207,15 +215,21 @@ if __name__ == "__main__":
         print(f"当前角度 - 水平: {h_angle:.1f}°, 垂直: {v_angle:.1f}°")
 
         # 相对移动
-        gimbal.move_by_angle(30, 15)  # 水平右转30度，垂直上转15度
+        gimbal.move_by_angle(45, 30)  # 水平右转30度，垂直上转15度
+        time.sleep(1)
+
+        gimbal.move_by_angle(-45, -30)  # 水平右转30度，垂直上转15度
+        time.sleep(2)
+
+        gimbal.auto_track_target(100, 100, 720, 1280)
         time.sleep(2)
 
         # 绝对移动到指定角度
-        gimbal.move_to_absolute_angle(45, 30)  # 移动到水平45度，垂直30度
+        gimbal.move_to_absolute_angle(0, 0)  # 移动到水平0度，垂直0度
         time.sleep(2)
 
         # 重置位置
-        gimbal.reset_position()
+        # gimbal.reset_position()
 
     except Exception as e:
         print(f"运行出错: {e}")

@@ -70,7 +70,7 @@ class EmmMotor:
         cmd = self._build_cmd(0x46, 0x69, 0x01 if svF else 0x00, ctrl_mode)
         self._send(cmd)
 
-    def enable_control(self, state: bool, snF: bool):
+    def enable_control(self, state: bool, snF: bool = False):
         """使能电机控制"""
         cmd = self._build_cmd(
             0xF3, 0xAB, 0x01 if state else 0x00, 0x01 if snF else 0x00
@@ -246,7 +246,7 @@ if __name__ == "__main__":
     # 配置串口
     BAUD_RATE = 115200
     SERIAL_PORT1 = "COM13"
-    SERIAL_PORT2 = "COM28"
+    SERIAL_PORT2 = "COM29"
 
     try:
         # 打开串口
@@ -258,21 +258,38 @@ if __name__ == "__main__":
         motor1 = EmmMotor(addr=1, serial_port=ser2)  # 共用一个串口
         motor2 = EmmMotor(addr=2, serial_port=ser2)
 
-        # 使能电机2
-        motor2.enable_control(state=True, snF=False)
+        # 使能电机
+        motor1.enable_control(state=True)
+        motor2.enable_control(state=True)
         time.sleep(0.1)
 
         # 发送位置控制指令（电机2：正转，4000RPM，100脉冲）
         motor2.position_control(
-            direction=0, velocity=100, acceleration=0, pulses=1000, raF=False, snF=False
+            direction=0, velocity=10, acceleration=0, pulses=500, raF=False, snF=False
         )
+
+        time.sleep(0.0001)
+
+        motor1.position_control(
+            direction=0, velocity=10, acceleration=0, pulses=500, raF=False, snF=False
+        )
+        time.sleep(1)
+
+
+        motor2.position_control(
+            direction=1, velocity=10, acceleration=0, pulses=500, raF=False, snF=False
+        )
+
         time.sleep(0.1)
 
-        # 发送位置控制指令（电机2：正转，4000RPM，100脉冲）
         motor1.position_control(
-            direction=0, velocity=100, acceleration=0, pulses=1000, raF=False, snF=False
+            direction=1, velocity=10, acceleration=0, pulses=500, raF=False, snF=False
         )
-        time.sleep(0.1)
+        time.sleep(1)
+
+        # 失能电机
+        motor1.enable_control(state=False)
+        motor2.enable_control(state=False)
 
         # 持续读取两个电机的位置
         print("实时位置监控 (Ctrl+C 退出):")

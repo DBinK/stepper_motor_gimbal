@@ -4,8 +4,8 @@ from loguru import logger
 
 from detector import Detector
 from uvc import USBCamera
-from gimbal import Gimbal
 from filters import CoordinateKalmanFilter 
+from gimbal import Gimbal
 
 from utils import time_diff
 
@@ -20,12 +20,13 @@ detector = Detector(
 # cam = USBCamera({'camera_id': 1,})
 cam = USBCamera(
     {
-        "camera_id": "http://192.168.0.110:4747/video",
+        # "camera_id": 1,
+        "camera_id": "http://192.168.1.207:4747/video",
     }
 )
 
 # 初始化云台
-# gim = Gimbal(horizontal_port='COM28', vertical_port='COM28')
+gim = Gimbal(horizontal_port='COM29', vertical_port='COM29')
 
 # 初始化坐标滤波器
 coord_filter = CoordinateKalmanFilter(
@@ -51,19 +52,25 @@ if __name__ == "__main__":
 
         # 绘制检测结果
         img = detector.draw(img, vertices, intersection)
+        
+        center_x = img.shape[1] // 2
+        center_y = img.shape[0] // 2
+        cv2.circle(img, (center_x, center_y), 3, (255, 0, 255), -1)
 
         # 绘制滤波后的点
         if filtered_coords is not None:
-            x, y = int(filtered_coords[0]), int(filtered_coords[1])
+            target_x, target_y = int(filtered_coords[0]), int(filtered_coords[1])
             if status == "initialized":
-                cv2.circle(img, (x, y), 5, (0, 255, 0), -1)  # 绿色: 滤波后
+                cv2.circle(img, (target_x, target_y), 5, (0, 255, 0), -1)  # 绿色: 滤波后
             elif status == "predicting":
-                cv2.circle(img, (x, y), 5, (255, 0, 0), -1)  # 蓝色: 预测
-                logger.info(f"predicting: ({x}, {y})")
+                cv2.circle(img, (target_x, target_y), 5, (255, 0, 0), -1)  # 蓝色: 预测
+                logger.info(f"predicting: ({target_x}, {target_y})")
 
             # 云台控制 (无云台时可注释后调试)
-            # if status in ['initialized', 'predicting']:
-            #     gim.auto_track_target(x, y, img.shape[1], img.shape[0])
+            if status in ['initialized', 'predicting']:
+                gim.horiz_move_factor = 10
+                gim.vert_move_factor = 10
+                gim.auto_track_target(target_x, target_y, img.shape[1], img.shape[0])
 
         # 显示状态信息
         if not coord_filter.is_initialized():
