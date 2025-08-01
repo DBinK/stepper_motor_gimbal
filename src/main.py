@@ -27,6 +27,9 @@ cam = USBCamera(
 
 # 初始化云台
 gim = Gimbal(horizontal_port='COM29', vertical_port='COM29')
+gim.set_angle_limits(horizontal_min=-90, horizontal_max=90, 
+                     vertical_min=-60, vertical_max=60
+)
 
 # 初始化坐标滤波器
 coord_filter = CoordinateKalmanFilter(
@@ -68,8 +71,9 @@ if __name__ == "__main__":
 
             # 云台控制 (无云台时可注释后调试)
             if status in ['initialized', 'predicting']:
-                gim.horiz_move_factor = 10
-                gim.vert_move_factor = 10
+                gim.horiz_move_factor = 2
+                gim.vert_move_factor = 2
+                # target_x = -target_x  # 反转方向q
                 gim.auto_track_target(target_x, target_y, img.shape[1], img.shape[0])
 
         # 显示状态信息
