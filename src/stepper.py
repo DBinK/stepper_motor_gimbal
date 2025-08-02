@@ -1,7 +1,7 @@
 import time
 import serial
 import struct
-from typing import Optional, Tuple
+from typing import Tuple
 
 
 class EmmMotor:
@@ -246,7 +246,7 @@ if __name__ == "__main__":
     # 配置串口
     BAUD_RATE = 115200
     SERIAL_PORT1 = "COM13"
-    SERIAL_PORT2 = "COM29"
+    SERIAL_PORT2 = "/dev/ttyS6"
 
     try:
         # 打开串口
@@ -263,29 +263,44 @@ if __name__ == "__main__":
         motor2.enable_control(state=True)
         time.sleep(0.1)
 
-        # 发送位置控制指令（电机2：正转，4000RPM，100脉冲）
+        # 发送位置控制指令（电机2：正转，4000RPM，100脉冲）        
+        
         motor2.position_control(
-            direction=0, velocity=10, acceleration=0, pulses=500, raF=False, snF=False
+            direction=0, velocity=10, acceleration=0, pulses=0, raF=True, snF=False
         )
 
-        time.sleep(0.0001)
+        time.sleep(0.01)
 
         motor1.position_control(
-            direction=0, velocity=10, acceleration=0, pulses=500, raF=False, snF=False
+            direction=0, velocity=10, acceleration=0, pulses=0, raF=True, snF=False
         )
+        time.sleep(0.01)
         time.sleep(1)
 
 
-        motor2.position_control(
-            direction=1, velocity=10, acceleration=0, pulses=500, raF=False, snF=False
-        )
+        # motor2.position_control(
+        #     direction=0, velocity=10, acceleration=0, pulses=500, raF=False, snF=False
+        # )
 
-        time.sleep(0.1)
+        # time.sleep(0.005)
 
-        motor1.position_control(
-            direction=1, velocity=10, acceleration=0, pulses=500, raF=False, snF=False
-        )
-        time.sleep(1)
+        # motor1.position_control(
+        #     direction=0, velocity=10, acceleration=0, pulses=500, raF=False, snF=False
+        # )
+        # time.sleep(0.01)
+        # time.sleep(1)
+
+
+        # motor2.position_control(
+        #     direction=1, velocity=10, acceleration=0, pulses=500, raF=False, snF=False
+        # )
+
+        # time.sleep(0.005)
+
+        # motor1.position_control(
+        #     direction=1, velocity=10, acceleration=0, pulses=500, raF=False, snF=False
+        # )
+        # time.sleep(1)
 
         # 失能电机
         motor1.enable_control(state=False)

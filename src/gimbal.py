@@ -168,7 +168,7 @@ class Gimbal:
         self._move_motors_by_angle(horizontal_diff, vertical_diff)
 
     def _move_motors_by_angle(
-        self, horizontal_angle_diff: float, vertical_angle_diff: float
+        self, horizontal_angle_diff: float, vertical_angle_diff: float, raF: bool = False
     ):
         """
         根据角度差移动电机
@@ -179,33 +179,38 @@ class Gimbal:
         horizontal_pulses = int(abs(horizontal_angle_diff) * 3200 / 360)
         vertical_pulses = int(abs(vertical_angle_diff) * 3200 / 360)
 
+        print(f"水平角度差: {horizontal_angle_diff:.2f}°, 脉冲数: {horizontal_pulses}")
+        print(f"垂直角度差: {vertical_angle_diff:.2f}°, 脉冲数: {vertical_pulses}")
+
         # 确定方向 (0: 正转, 1: 反转)
         horizontal_direction = 0 if horizontal_angle_diff >= 0 else 1
         vertical_direction = 0 if vertical_angle_diff >= 0 else 1
 
         # 控制水平电机
-        if horizontal_pulses > 0:
+        if horizontal_pulses >= 0:
             self.horizontal_motor.position_control(
                 direction=horizontal_direction,
                 velocity=100,
                 acceleration=0,
                 pulses=horizontal_pulses,
-                raF=False,
+                raF=raF,
                 snF=False,
             )
 
-        time.sleep(0.001)  # 必须延时1ms, 不然串口信号会乱
+        time.sleep(0.005)  # 必须延时, 不然串口信号会乱
 
         # 控制垂直电机
-        if vertical_pulses > 0:
+        if vertical_pulses >= 0:
             self.vertical_motor.position_control(
                 direction=vertical_direction,
                 velocity=100,
                 acceleration=0,
                 pulses=vertical_pulses,
-                raF=False,
+                raF=raF,
                 snF=False,
             )
+
+        time.sleep(0.005)  # 必须延时, 不然串口信号会乱
 
         # 更新角度状态
         self.horizontal_angle += horizontal_angle_diff
@@ -279,7 +284,8 @@ class Gimbal:
 # 使用示例
 if __name__ == "__main__":
     # 创建云台对象 (根据实际串口配置修改)
-    gimbal = Gimbal(horizontal_port="COM29", vertical_port="COM29")
+    # gimbal = Gimbal(horizontal_port="COM29", vertical_port="COM29")
+    gimbal = Gimbal(horizontal_port="/dev/ttyS6", vertical_port="/dev/ttyS6")
 
     try:
         # 设置角度限位 (可选，默认为水平-180~180度，垂直-90~90度)
@@ -295,13 +301,13 @@ if __name__ == "__main__":
         time.sleep(1)
 
         gimbal.move_by_angle(-45, -30)  # 水平右转30度，垂直上转15度
-        time.sleep(2)
+        time.sleep(1)
 
         gimbal.auto_track_target(100, 100, 720, 1280)
-        time.sleep(2)
+        time.sleep(1)
 
         # 绝对移动到指定角度
-        gimbal.move_to_absolute_angle(0, 0)  # 移动到水平0度，垂直0度
+        gimbal._move_motors_by_angle(0, 0, True)  # 移动到水平0度，垂直0度
         time.sleep(2)
 
         # 重置位置
