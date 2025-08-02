@@ -32,8 +32,8 @@ cam = USBCamera()
 # 初始化云台
 # gim = Gimbal(horizontal_port='COM29', vertical_port='COM29')
 gim = Gimbal(horizontal_port='/dev/ttyS6', vertical_port='/dev/ttyS6')
-gim.set_angle_limits(horizontal_min=-12000, horizontal_max=12000, 
-                     vertical_min=-60, vertical_max=60
+gim.set_angle_limits(horizontal_min=-1200000, horizontal_max=1200000, 
+                     vertical_min=-90000, vertical_max=90000
 )
 
 # 初始化坐标滤波器
@@ -58,60 +58,62 @@ if __name__ == "__main__":
         img = detector.draw(img, vertices, intersection)
         
         center_x = img.shape[1] // 2
-        center_y = img.shape[0] // 2
-        cv2.circle(img, (center_x, center_y), 5, (255, 0, 255), -1)  # 绘制准星
+        center_y = img.shape[0] // 2 + 60
+        cv2.circle(img, (center_x, center_y), 9, (255, 0, 255), -1)  # 绘制准星
 
         if intersection is not None:
+            gim.horiz_move_factor = 20
+            gim.vert_move_factor = 10
             gim.auto_track_target(intersection[0], intersection[1], img.shape[1], img.shape[0])
 
-        # 处理坐标 - 核心变化在这里
-        measurement = intersection  # 可以是None
-        filtered_coords, status = coord_filter.process(measurement)
+        # # 处理坐标 - 核心变化在这里
+        # measurement = intersection  # 可以是None
+        # filtered_coords, status = coord_filter.process(measurement)
 
-        # 绘制滤波后的点
-        if filtered_coords is not None:
-            target_x, target_y = int(filtered_coords[0]), int(filtered_coords[1])
-            if status == "initialized":
-                cv2.circle(img, (target_x, target_y), 5, (0, 255, 0), -1)  # 绿色: 滤波后
-            elif status == "predicting":
-                cv2.circle(img, (target_x, target_y), 5, (255, 0, 0), -1)  # 蓝色: 预测
-                logger.info(f"predicting: ({target_x}, {target_y})")
+        # # 绘制滤波后的点
+        # if filtered_coords is not None:
+        #     target_x, target_y = int(filtered_coords[0]), int(filtered_coords[1])
+        #     if status == "initialized":
+        #         cv2.circle(img, (target_x, target_y), 5, (0, 255, 0), -1)  # 绿色: 滤波后
+        #     elif status == "predicting":
+        #         cv2.circle(img, (target_x, target_y), 5, (255, 0, 0), -1)  # 蓝色: 预测
+        #         logger.info(f"predicting: ({target_x}, {target_y})")
 
-            # 云台控制 (无云台时可注释后调试)
-            if status in ['initialized', 'predicting']:
-                gim.horiz_move_factor = 20
-                gim.vert_move_factor = 20
-                # target_x = -target_x  # 反转方向q
-                # gim.auto_track_target(target_x, target_y, img.shape[1], img.shape[0])
+        #     # 云台控制 (无云台时可注释后调试)
+        #     if status in ['initialized', 'predicting']:
+        #         gim.horiz_move_factor = 20
+        #         gim.vert_move_factor = 20
+        #         # target_x = -target_x  # 反转方向q
+        #         # gim.auto_track_target(target_x, target_y, img.shape[1], img.shape[0])
 
-        # 显示状态信息
-        if not coord_filter.is_initialized():
-            status_text = f"Collecting samples: {coord_filter.get_sample_count()}/{coord_filter.initial_samples_needed}"
-        elif measurement is None:
-            status_text = "Tracking (predicti mode)"
-        else:
-            status_text = "Tracking (filter mode)"
+        # # 显示状态信息
+        # if not coord_filter.is_initialized():
+        #     status_text = f"Collecting samples: {coord_filter.get_sample_count()}/{coord_filter.initial_samples_needed}"
+        # elif measurement is None:
+        #     status_text = "Tracking (predicti mode)"
+        # else:
+        #     status_text = "Tracking (filter mode)"
 
-        cv2.putText(
-            img,
-            f"Kalman: {status_text}",
-            (10, 30),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.7,
-            (0, 255, 0),
-            2,
-        )
+        # cv2.putText(
+        #     img,
+        #     f"Kalman: {status_text}",
+        #     (10, 30),
+        #     cv2.FONT_HERSHEY_SIMPLEX,
+        #     0.7,
+        #     (0, 255, 0),
+        #     2,
+        # )
 
-        if filtered_coords is not None and coord_filter.is_initialized():
-            cv2.putText(
-                img,
-                f"Filtered: ({int(filtered_coords[0])}, {int(filtered_coords[1])})",
-                (10, 60),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 255, 0),
-                2,
-            )
+        # if filtered_coords is not None and coord_filter.is_initialized():
+        #     cv2.putText(
+        #         img,
+        #         f"Filtered: ({int(filtered_coords[0])}, {int(filtered_coords[1])})",
+        #         (10, 60),
+        #         cv2.FONT_HERSHEY_SIMPLEX,
+        #         0.7,
+        #         (0, 255, 0),
+        #         2,
+        #     )
 
         # 显示图像
         cv2.namedWindow("Kalman Filtered Tracking", cv2.WINDOW_NORMAL)

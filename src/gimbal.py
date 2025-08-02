@@ -56,8 +56,8 @@ class Gimbal:
         self.vertical_max_angle = 90.0      # 垂直最大角度限制
 
         # 云台参数配置
-        self.horiz_move_factor = 100.5  # 水平移动因子
-        self.vert_move_factor = 100.5  # 垂直移动因子
+        self.horiz_move_factor = 20 # 水平移动因子
+        self.vert_move_factor = 20  # 垂直移动因子
 
         # 性能优化相关
         self.last_angle_update = 0.0  # 上次角度更新时间
@@ -191,7 +191,7 @@ class Gimbal:
             self.horizontal_motor.position_control(
                 direction=horizontal_direction,
                 velocity=1000,
-                acceleration=255,
+                acceleration=222,
                 pulses=horizontal_pulses,
                 raF=raF,
                 snF=False,
@@ -204,7 +204,7 @@ class Gimbal:
             self.vertical_motor.position_control(
                 direction=vertical_direction,
                 velocity=1000,
-                acceleration=255,
+                acceleration=222,
                 pulses=vertical_pulses,
                 raF=raF,
                 snF=False,
@@ -231,7 +231,7 @@ class Gimbal:
         """
         # 计算图像中心点
         center_x = frame_width // 2
-        center_y = frame_height // 2
+        center_y = frame_height // 2 + 60
 
         # 计算偏差
         delta_x = target_x - center_x
