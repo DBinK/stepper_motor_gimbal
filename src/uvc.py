@@ -43,12 +43,12 @@ class USBCamera:
         # 设置图像宽度
         capture.set(cv2.CAP_PROP_FRAME_WIDTH, int(self.config.get("image_height", 720)))
         # 设置帧率
-        capture.set(cv2.CAP_PROP_FPS, int(self.config.get("fps", 30)))
+        capture.set(cv2.CAP_PROP_FPS, int(self.config.get("fps", 120)))
 
         capture.set(
             cv2.CAP_PROP_AUTO_EXPOSURE, int(self.config.get("auto_exposure", 1))
         )
-        capture.set(cv2.CAP_PROP_EXPOSURE, int(self.config.get("exposure_time", 100)))
+        capture.set(cv2.CAP_PROP_EXPOSURE, int(self.config.get("exposure_time", 1000)))
         capture.set(cv2.CAP_PROP_GAIN, int(self.config.get("gain", 100)))
 
         self.cap = capture

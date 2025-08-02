@@ -18,15 +18,20 @@ detector = Detector(
 
 # 初始化相机
 # cam = USBCamera({'camera_id': 1,})
-cam = USBCamera(
-    {
-        "camera_id": 1,
-        # "camera_id": "http://192.168.1.207:4747/video",
-    }
-)
+camera_params = {
+    "camera_id": 0,
+    "image_width": 1280,
+    "image_height": 720,
+    "auto_exposure": 1,
+    "exposure_time": 5000,
+    "fps": 60,
+    "gain": 100,
+}
+cam = USBCamera(camera_params)
 
 # 初始化云台
-gim = Gimbal(horizontal_port='COM29', vertical_port='COM29')
+# gim = Gimbal(horizontal_port='COM29', vertical_port='COM29')
+gim = Gimbal(horizontal_port='/dev/ttyS6', vertical_port='/dev/ttyS6')
 gim.set_angle_limits(horizontal_min=-90, horizontal_max=90, 
                      vertical_min=-60, vertical_max=60
 )
