@@ -32,7 +32,7 @@ cam = USBCamera()
 # 初始化云台
 # gim = Gimbal(horizontal_port='COM29', vertical_port='COM29')
 gim = Gimbal(horizontal_port='/dev/ttyS6', vertical_port='/dev/ttyS6')
-gim.set_angle_limits(horizontal_min=-90, horizontal_max=90, 
+gim.set_angle_limits(horizontal_min=-1200, horizontal_max=1200, 
                      vertical_min=-60, vertical_max=60
 )
 

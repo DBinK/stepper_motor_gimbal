@@ -14,10 +14,10 @@ camera_params = {
     # 'image_height': 1080,
     'image_width': 1280,
     'image_height': 720,
-    'auto_exposure': 1,
+    'auto_exposure': 3,  # 3 自动曝光
     'exposure_time': 5000,
-    'fps': 30,
-    'gain': 100,
+    'fps': 60,
+    'gain': 200,
     'auto_wb': 0,
     'wb_temperature': 5000,
     'contrast': 42,
@@ -75,8 +75,8 @@ class USBCamera:
         self.cap.set(cv2.CAP_PROP_FPS, self.fps)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.image_width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.image_height)
-        # self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, self.auto_exposure)
-        # self.cap.set(cv2.CAP_PROP_EXPOSURE, self.exposure_time)
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, self.auto_exposure)
+        self.cap.set(cv2.CAP_PROP_EXPOSURE, self.exposure_time)
         # self.cap.set(cv2.CAP_PROP_GAIN, self.gain)
         # self.cap.set(cv2.CAP_PROP_AUTO_WB, self.auto_wb)  # 关闭自动白平衡
         # self.cap.set(cv2.CAP_PROP_WB_TEMPERATURE, self.wb_temperature)  # 设置白平衡色温
