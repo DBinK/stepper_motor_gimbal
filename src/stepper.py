@@ -315,20 +315,21 @@ if __name__ == "__main__":
             # print(f" Motor2: {pos2:6.1f}°")
             time.sleep(0.1)
 
-    except KeyboardInterrupt:
-        print("\n用户中断，停止电机...")
-        motor1.stop_now(snF=False)
-        motor2.stop_now(snF=False)
+    # except KeyboardInterrupt:
+    #     print("\n用户中断，停止电机...")
+    #     motor1.stop_now(snF=False)
+    #     motor2.stop_now(snF=False)
     except Exception as e:
         print(f"运行出错: {e}")
     finally:
         try:
             # ser1.close()
             pass
-        except:
-            pass
-        try:
-            ser2.close()
-        except:
-            pass
+        # except:
+        #     pass
+        # try:
+        #     ser2.close()
+        except Exception as e:
+            print(f"运行出错: {e}")
+            
         print("串口已关闭")

@@ -43,12 +43,15 @@ class Detector:
         # blur = cv2.convertScaleAbs(blur, alpha=1, beta=-120)
 
         # 二值化
-        # _, blur = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        # _, threshold = cv2.threshold(blur, 157, 255, cv2.THRESH_BINARY) # 二值化
+        # _, threshold = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        _, threshold = cv2.threshold(blur, 120, 255, cv2.THRESH_BINARY) # 二值化
 
-        edges = cv2.Canny(blur, 50, 200)
+        # edges = cv2.Canny(blur, 50, 200)
 
-        return edges
+        cv2.namedWindow('pre_img', cv2.WINDOW_NORMAL)
+        cv2.imshow('pre_img', threshold)
+
+        return threshold
 
     def find_max_quad_vertices(self, pre_img):
         """

@@ -11,23 +11,23 @@ from utils import time_diff
 
 # 初始化检测器
 detector = Detector(
-    max_perimeter=99999,
-    min_perimeter=1,
+    max_perimeter=(800+600)*2 - 1000,
+    min_perimeter=500,
     min_angle=30,
 )
 
 # 初始化相机
 # cam = USBCamera({'camera_id': 1,})
-camera_params = {
-    "camera_id": 0,
-    "image_width": 1280,
-    "image_height": 720,
-    "auto_exposure": 1,
-    "exposure_time": 5000,
-    "fps": 60,
-    "gain": 100,
-}
-cam = USBCamera(camera_params)
+# camera_params = {
+#     "camera_id": 0,
+#     "image_width": 1280,
+#     "image_height": 720,
+#     "auto_exposure": 3,
+#     "exposure_time": 8000,
+#     "fps": 60,
+#     "gain": 100,
+# }
+cam = USBCamera()
 
 # 初始化云台
 # gim = Gimbal(horizontal_port='COM29', vertical_port='COM29')
@@ -59,7 +59,10 @@ if __name__ == "__main__":
         
         center_x = img.shape[1] // 2
         center_y = img.shape[0] // 2
-        cv2.circle(img, (center_x, center_y), 3, (255, 0, 255), -1)  # 绘制准星
+        cv2.circle(img, (center_x, center_y), 5, (255, 0, 255), -1)  # 绘制准星
+
+        if intersection is not None:
+            gim.auto_track_target(intersection[0], intersection[1], img.shape[1], img.shape[0])
 
         # 处理坐标 - 核心变化在这里
         measurement = intersection  # 可以是None
@@ -76,10 +79,10 @@ if __name__ == "__main__":
 
             # 云台控制 (无云台时可注释后调试)
             if status in ['initialized', 'predicting']:
-                gim.horiz_move_factor = 10
-                gim.vert_move_factor = 10
+                gim.horiz_move_factor = 20
+                gim.vert_move_factor = 20
                 # target_x = -target_x  # 反转方向q
-                gim.auto_track_target(target_x, target_y, img.shape[1], img.shape[0])
+                # gim.auto_track_target(target_x, target_y, img.shape[1], img.shape[0])
 
         # 显示状态信息
         if not coord_filter.is_initialized():

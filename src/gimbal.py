@@ -190,8 +190,8 @@ class Gimbal:
         if horizontal_pulses >= 0:
             self.horizontal_motor.position_control(
                 direction=horizontal_direction,
-                velocity=100,
-                acceleration=0,
+                velocity=1000,
+                acceleration=255,
                 pulses=horizontal_pulses,
                 raF=raF,
                 snF=False,
@@ -203,8 +203,8 @@ class Gimbal:
         if vertical_pulses >= 0:
             self.vertical_motor.position_control(
                 direction=vertical_direction,
-                velocity=100,
-                acceleration=0,
+                velocity=1000,
+                acceleration=255,
                 pulses=vertical_pulses,
                 raF=raF,
                 snF=False,
